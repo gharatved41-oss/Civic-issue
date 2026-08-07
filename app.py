@@ -183,17 +183,20 @@ def login_register_view():
     with tab_register:
         with st.form("register_form"):
             new_username = st.text_input(t("choose_username"))
-            new_email = st.text_input(t("email"))
+            new_phone = st.text_input(t("phone"), placeholder="e.g. 9876543210", max_chars=10)
             new_password = st.text_input(t("choose_password"), type="password")
             confirm_password = st.text_input(t("confirm_password"), type="password")
             submitted = st.form_submit_button(t("create_account"), use_container_width=True)
             if submitted:
+                phone_digits = new_phone.strip()
                 if not new_username or not new_password:
                     st.error(t("register_required"))
                 elif new_password != confirm_password:
                     st.error(t("register_mismatch"))
+                elif not (phone_digits.isdigit() and len(phone_digits) == 10):
+                    st.error(t("register_invalid_phone"))
                 else:
-                    ok, msg = db.create_user(new_username, new_password, new_email, role="citizen")
+                    ok, msg = db.create_user(new_username, new_password, phone_digits, role="citizen")
                     if ok:
                         st.success(msg + t("register_success_suffix"))
                     else:

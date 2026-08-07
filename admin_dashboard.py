@@ -76,7 +76,12 @@ def render():
                 unsafe_allow_html=True,
             )
             st.write("")
-            st.write(f"**Reported by:** {row['username']}")
+            reporter_phone = db.get_user_phone(row["username"])
+            phone_display = f" &nbsp;•&nbsp; 📞 {reporter_phone}" if reporter_phone else " &nbsp;•&nbsp; 📞 —"
+            st.markdown(
+                f"**Reported by:** {row['username']}{phone_display}",
+                unsafe_allow_html=True,
+            )
             st.write(f"**Location:** {row['location_text']}  (lat: {row['lat']}, lon: {row['lon']})")
             st.write(f"**Description:** {row['description']}")
             st.write(f"**Reported at:** {row['created_at']}")

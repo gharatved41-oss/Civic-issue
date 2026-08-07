@@ -38,6 +38,17 @@ def init_db():
         )
     """)
 
+    # Migration: add a 'phone' column for existing databases created before
+    # this field existed. New installs get it via the CREATE TABLE above's
+    # ALTER on first run too, since SQLite has no "ADD COLUMN IF NOT EXISTS" —
+    # so we check first. 'email' is kept (unused going forward) purely so any
+    # already-deployed DB doesn't lose that historical data.
+    cur.execute("PRAGMA table_info(users)")
+    existing_columns = {row["name"] for row in cur.fetchall()}
+    if "phone" not in existing_columns:
+        cur.execute("ALTER TABLE users ADD COLUMN phone TEXT")
+        conn.commit()
+
     cur.execute("""
         CREATE TABLE IF NOT EXISTS incidents (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -64,12 +75,12 @@ def init_db():
     if cur.fetchone()["c"] == 0:
         now = datetime.now().isoformat()
         cur.execute(
-            "INSERT INTO users (username, password, email, role, created_at) VALUES (?, ?, ?, ?, ?)",
-            ("admin", hash_password("admin123"), "admin@civicsense.ai", "admin", now),
+            "INSERT INTO users (username, password, phone, role, created_at) VALUES (?, ?, ?, ?, ?)",
+            ("admin", hash_password("admin123"), "9999900000", "admin", now),
         )
         cur.execute(
-            "INSERT INTO users (username, password, email, role, created_at) VALUES (?, ?, ?, ?, ?)",
-            ("citizen", hash_password("citizen123"), "citizen@civicsense.ai", "citizen", now),
+            "INSERT INTO users (username, password, phone, role, created_at) VALUES (?, ?, ?, ?, ?)",
+            ("citizen", hash_password("citizen123"), "9999911111", "citizen", now),
         )
         conn.commit()
 
@@ -92,13 +103,13 @@ def init_db():
 
 # ---------------- USER FUNCTIONS ----------------
 
-def create_user(username, password, email, role="citizen"):
+def create_user(username, password, phone, role="citizen"):
     conn = get_connection()
     cur = conn.cursor()
     try:
         cur.execute(
-            "INSERT INTO users (username, password, email, role, created_at) VALUES (?, ?, ?, ?, ?)",
-            (username, hash_password(password), email, role, datetime.now().isoformat()),
+            "INSERT INTO users (username, password, phone, role, created_at) VALUES (?, ?, ?, ?, ?)",
+            (username, hash_password(password), phone, role, datetime.now().isoformat()),
         )
         conn.commit()
         return True, "Account created successfully."
@@ -106,6 +117,17 @@ def create_user(username, password, email, role="citizen"):
         return False, "Username already exists."
     finally:
         conn.close()
+
+
+def get_user_phone(username):
+    """Look up the phone number linked to a username (used by the admin
+    dashboard to show who to contact about a given incident)."""
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT phone FROM users WHERE username = ?", (username,))
+    row = cur.fetchone()
+    conn.close()
+    return row["phone"] if row and row["phone"] else None
 
 
 def verify_user(username, password):
