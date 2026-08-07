@@ -1,0 +1,7 @@
+streamlit>=1.33
+pandas
+pydeck
+anthropic
+folium
+streamlit-folium
+requests

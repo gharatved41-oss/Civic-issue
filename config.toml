@@ -1,0 +1,24 @@
+# Streamlit runtime + theme config for deployment.
+# Theme mirrors the "Neon Grid" palette in style.py so Streamlit's native
+# chrome (menu, spinners, tooltips) matches the custom CSS instead of
+# flashing the default light theme before style.py's CSS loads.
+
+[theme]
+base = "dark"
+primaryColor = "#00E5C7"
+backgroundColor = "#060A14"
+secondaryBackgroundColor = "#0A1122"
+textColor = "#E9F3FF"
+font = "sans serif"
+
+[server]
+headless = true
+enableCORS = false
+enableXsrfProtection = true
+# Streamlit Cloud / most PaaS providers inject $PORT; this is the local/
+# container default and is overridden by the platform where needed.
+port = 8501
+maxUploadSize = 15
+
+[browser]
+gatherUsageStats = false
